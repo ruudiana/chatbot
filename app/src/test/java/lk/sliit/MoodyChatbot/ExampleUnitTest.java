@@ -1,4 +1,4 @@
-package com.tyagiabhinav.dialogflowchat;
+package lk.sliit.MoodyChatbot;
 
 import org.junit.Test;
 

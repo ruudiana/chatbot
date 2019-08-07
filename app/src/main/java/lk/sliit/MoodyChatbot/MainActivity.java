@@ -1,4 +1,4 @@
-package com.tyagiabhinav.dialogflowchat;
+package lk.sliit.MoodyChatbot;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -23,16 +23,11 @@ import com.google.cloud.dialogflow.v2beta1.SessionName;
 import com.google.cloud.dialogflow.v2beta1.SessionsClient;
 import com.google.cloud.dialogflow.v2beta1.SessionsSettings;
 import com.google.cloud.dialogflow.v2beta1.TextInput;
+import lk.sliit.MoodyChatbot.R;
 
 import java.io.InputStream;
 import java.util.UUID;
 
-import ai.api.AIServiceContext;
-import ai.api.AIServiceContextBuilder;
-import ai.api.android.AIConfiguration;
-import ai.api.android.AIDataService;
-import ai.api.model.AIRequest;
-import ai.api.model.AIResponse;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,14 +39,11 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout chatLayout;
     private EditText queryEditText;
 
-    // Android client
-    private AIRequest aiRequest;
-    private AIDataService aiDataService;
-    private AIServiceContext customAIServiceContext;
-
     // Java V2
     private SessionsClient sessionsClient;
     private SessionName session;
+
+    public String replyState;
 
 
     @Override
@@ -82,25 +74,16 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        // Android client
-//        initChatbot();
-
         // Java V2
         initV2Chatbot();
-    }
 
-    private void initChatbot() {
-        final AIConfiguration config = new AIConfiguration(BuildConfig.ClientAccessToken,
-                AIConfiguration.SupportedLanguages.English,
-                AIConfiguration.RecognitionEngine.System);
-        aiDataService = new AIDataService(this, config);
-        customAIServiceContext = AIServiceContextBuilder.buildFromSessionId(uuid);// helps to create new session whenever app restarts
-        aiRequest = new AIRequest();
+        QueryInput queryInput = QueryInput.newBuilder().setText(TextInput.newBuilder().setText("hi").setLanguageCode("en-US")).build();
+        new RequestJavaV2Task(MainActivity.this, session, sessionsClient, queryInput).execute();
     }
 
     private void initV2Chatbot() {
         try {
-            InputStream stream = getResources().openRawResource(R.raw.test_agent_credentials);
+            InputStream stream = getResources().openRawResource(R.raw.test_agent_credentialss);
             GoogleCredentials credentials = GoogleCredentials.fromStream(stream);
             String projectId = ((ServiceAccountCredentials)credentials).getProjectId();
 
@@ -120,35 +103,23 @@ public class MainActivity extends AppCompatActivity {
         } else {
             showTextView(msg, USER);
             queryEditText.setText("");
-            // Android client
-//            aiRequest.setQuery(msg);
-//            RequestTask requestTask = new RequestTask(MainActivity.this, aiDataService, customAIServiceContext);
-//            requestTask.execute(aiRequest);
+
+           String msgText=checkCode(replyState,msg);
 
             // Java V2
-            QueryInput queryInput = QueryInput.newBuilder().setText(TextInput.newBuilder().setText(msg).setLanguageCode("en-US")).build();
+            QueryInput queryInput = QueryInput.newBuilder().setText(TextInput.newBuilder().setText(msgText).setLanguageCode("en-US")).build();
             new RequestJavaV2Task(MainActivity.this, session, sessionsClient, queryInput).execute();
         }
     }
 
-    public void callback(AIResponse aiResponse) {
-        if (aiResponse != null) {
-            // process aiResponse here
-            String botReply = aiResponse.getResult().getFulfillment().getSpeech();
-            Log.d(TAG, "Bot Reply: " + botReply);
-            showTextView(botReply, BOT);
-        } else {
-            Log.d(TAG, "Bot Reply: Null");
-            showTextView("There was some communication issue. Please Try again!", BOT);
-        }
-    }
 
     public void callbackV2(DetectIntentResponse response) {
         if (response != null) {
-            // process aiResponse here
             String botReply = response.getQueryResult().getFulfillmentText();
             Log.d(TAG, "V2 Bot Reply: " + botReply);
             showTextView(botReply, BOT);
+            //this function set the code for reply state
+            setCode(botReply);
         } else {
             Log.d(TAG, "Bot Reply: Null");
             showTextView("There was some communication issue. Please Try again!", BOT);
@@ -184,5 +155,30 @@ public class MainActivity extends AppCompatActivity {
     FrameLayout getBotLayout() {
         LayoutInflater inflater = LayoutInflater.from(MainActivity.this);
         return (FrameLayout) inflater.inflate(R.layout.bot_msg_layout, null);
+    }
+
+    public void setCode(String botMsg){
+
+        if (botMsg.equals("oh, sorry to hear that. What made you feel not good today?")){
+            replyState="ignoreReply";
+
+        }else if (botMsg == "hh"){
+
+        }else {
+            replyState = "botmsg";
+        }
+    }
+
+    public String checkCode(String reply,String msg){
+
+        if(reply.equals("ignoreReply")){
+            return "ignoreReply";
+
+        }else if (reply == "hh"){
+
+        }
+
+        return msg;
+
     }
 }

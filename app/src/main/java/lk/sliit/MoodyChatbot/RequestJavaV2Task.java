@@ -1,4 +1,4 @@
-package com.tyagiabhinav.dialogflowchat;
+package lk.sliit.MoodyChatbot;
 
 import android.app.Activity;
 import android.os.AsyncTask;

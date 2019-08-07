@@ -1,4 +1,4 @@
-package com.tyagiabhinav.dialogflowchat;
+package lk.sliit.MoodyChatbot;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
